@@ -44,4 +44,21 @@ public class DeckTests
         // Verificăm că apelarea metodei Draw aruncă excepția noastră custom
         Assert.Throws<EmptyDeckException>(() => deck.Draw());
     }
+    [Fact]
+    public void Shuffle_ShouldChangeTheOrderOfItems()
+    {
+        var initialItems = new List<string> { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" };
+        var deck = new Deck<string>(initialItems);
+
+        deck.Shuffle();
+
+        var drawnItems = new List<string>();
+        while(deck.Count > 0) 
+        {
+            drawnItems.Add(deck.Draw());
+        }
+
+        Assert.Equal(10, drawnItems.Count);
+        Assert.NotEqual(initialItems, drawnItems);
+    }
 }
