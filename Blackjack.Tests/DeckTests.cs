@@ -15,4 +15,33 @@ public class DeckTests
 
         Assert.Equal(3, deck.Count);
     }
+
+[Fact]
+    public void Draw_ShouldReturnTopItem_AndDecreaseCount()
+    {
+        // Arrange
+        var initialItems = new List<string> { "Card1", "Card2" };
+        var deck = new Deck<string>(initialItems);
+
+        // Act
+        // Tragem o carte (ar trebui să fie prima din listă, adică "Card1")
+        var drawnItem = deck.Draw();
+
+        // Assert
+        Assert.Equal("Card1", drawnItem);
+        // Ne așteptăm să mai rămână doar o carte în pachet
+        Assert.Equal(1, deck.Count);
+    }
+
+    [Fact]
+    public void Draw_ShouldThrowEmptyDeckException_WhenDeckIsEmpty()
+    {
+        // Arrange
+        // Creăm un pachet complet gol
+        var deck = new Deck<string>(new List<string>());
+
+        // Act & Assert
+        // Verificăm că apelarea metodei Draw aruncă excepția noastră custom
+        Assert.Throws<EmptyDeckException>(() => deck.Draw());
+    }
 }

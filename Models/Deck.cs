@@ -12,4 +12,16 @@ public class Deck<T>
     {
         _items = new List<T>(items);
     }
+
+    public T Draw()
+    {
+        if (_items.Count == 0)
+        {
+            throw new EmptyDeckException();
+        }
+
+        T item = _items[0];
+        _items.RemoveAt(0);
+        return item;
+    }
 }
