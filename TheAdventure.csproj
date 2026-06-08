@@ -13,5 +13,9 @@
       <PackageReference Include="Silk.NET.SDL" Version="2.23.0" />
       <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.23.0" />
     </ItemGroup>
-
+<ItemGroup>
+    <Compile Remove="Blackjack.Tests\**" />
+    <EmbeddedResource Remove="Blackjack.Tests\**" />
+    <None Remove="Blackjack.Tests\**" />
+  </ItemGroup>
 </Project>
