@@ -1,5 +1,4 @@
-namespace TheAdventure.Models;
-
+namespace TheAdventure;
 public class BlackjackGame
 {
     public int PlayerBalance { get;  set; }

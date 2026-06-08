@@ -1,6 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using Silk.NET.SDL;
-
 namespace TheAdventure;
 
 public static class Program
@@ -71,10 +71,20 @@ public static class Program
         var startY = 100;
         var endX = 200;
         var endY = 200;
-
+        int playerHandX = 100;
+        int playerHandY = 500; 
+        var playerHand = new List<Card>
+        {
+            new Card(Suit.Hearts, CardValue.Ten),
+            new Card(Suit.Spades, CardValue.Seven),
+            new Card(Suit.Clubs, CardValue.Four)
+        };
+        
         bool quit = false;
+       
         while (!quit)
         {
+            
             while (sdl.PollEvent(ref ev) != 0)
             {
                 if (ev.Type == (uint)EventType.Quit)
@@ -158,8 +168,8 @@ public static class Program
                         }
                         else
                         {
-                            startX = ev.Motion.X;
-                            startY = ev.Motion.Y;
+                           // startX = ev.Motion.X;
+                          //  startY = ev.Motion.Y;
                         }
 
                         break;
@@ -212,20 +222,48 @@ public static class Program
             // game.render(renderer, RenderEvent{ elapsed, framesRenderedCounter++ });
             unsafe
             {
-                var r = (Renderer *)renderer;
-
-                sdl.SetRenderDrawColor(r, 255, 255, 255, 255);
+                var r = (Renderer*)renderer;
+                sdl.SetRenderDrawColor(r, 0, 100, 0, 255); // Masa de joc
                 sdl.RenderClear(r);
 
-                sdl.SetRenderDrawColor(r, 255, 0, 0, 255);
-                sdl.RenderDrawLine(r, startX, startY, endX, endY);
+                
+                for (int i = 0; i < playerHand.Count; i++)
+                {
+                    // 1. Desenăm dreptunghiul alb (fața cărții)
+                    var cardRect = new Silk.NET.Maths.Rectangle<int>(startX + (i * 110), 500, 100, 150);
+                    sdl.SetRenderDrawColor(r, 255, 255, 255, 255);
+                    sdl.RenderFillRect(r, ref cardRect);
 
+                    // 2. Desenăm conturul negru
+                    sdl.SetRenderDrawColor(r, 0, 0, 0, 255);
+                    sdl.RenderDrawRect(r, ref cardRect);
+                }
+                DrawHand(r, sdl, playerHand, playerHandX, playerHandY);
                 sdl.RenderPresent(r);
             }
 
             ++framesRenderedCounter;
         }
+        unsafe void DrawHand(Renderer* r, Sdl sdl, List<Card> hand, int startX, int startY)
+{
+int cardWidth = 70;
+int cardHeight = 100;
+    int spacing = 10;
 
+    for (int i = 0; i < hand.Count; i++)
+    {
+        // Calculăm poziția pentru fiecare carte
+        var cardRect = new Silk.NET.Maths.Rectangle<int>(startX + i * (cardWidth + spacing), startY, cardWidth, cardHeight);
+        
+        // Desenăm spatele/fața cărții
+        sdl.SetRenderDrawColor(r, 255, 255, 255, 255); // Alb
+        sdl.RenderFillRect(r, ref cardRect);
+        
+        // Desenăm conturul
+        sdl.SetRenderDrawColor(r, 0, 0, 0, 255); // Negru
+        sdl.RenderDrawRect(r, ref cardRect);
+    }
+}
         unsafe
         {
             sdl.DestroyWindow((Window*)window);

@@ -1,7 +1,6 @@
 using System;
 
-namespace TheAdventure.Models;
-
+namespace TheAdventure;
 public class EmptyDeckException : Exception
 {
     public EmptyDeckException(string message = "Cannot draw from an empty deck.") 

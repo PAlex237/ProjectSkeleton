@@ -1,5 +1,4 @@
-namespace TheAdventure.Models;
-public enum GameResult
+namespace TheAdventure;public enum GameResult
 {
     PlayerWins,
     DealerWins,

@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TheAdventure.Models;
-
+namespace TheAdventure;
 public class Deck<T>
 {
     private List<T> _items;

@@ -1,5 +1,5 @@
 using Xunit;
-using TheAdventure.Models;
+using TheAdventure;
 namespace Blackjack.Tests;
 
 public class BlackjackGameTests

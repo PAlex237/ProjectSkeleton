@@ -1,11 +1,11 @@
-namespace TheAdventure.Models;
+namespace TheAdventure;
 
 public enum Suit
 {
-    Hearts,
-    Diamonds,
-    Clubs,
-    Spades
+    Hearts = 0,
+    Diamonds = 1,
+    Clubs = 2,
+    Spades = 3
 }
 
 public enum CardValue
@@ -34,5 +34,25 @@ public class Card
     {
         Suit = suit;
         Value = value;
+    }
+
+    // Aflăm pe ce coloană se află cartea (Axa X)
+    public int GetSpriteColumn()
+    {
+        // Asul e pe coloana 0
+        if (Value == CardValue.Ace) 
+        {
+            return 0;
+        }
+        // Restul cărților sunt pur și simplu valoarea lor minus 1
+        // Ex: Cartea 2 -> Coloana 1. Popa (13) -> Coloana 12.
+        return (int)Value - 1;
+    }
+
+    // Aflăm pe ce rând se află culoarea (Axa Y)
+    public int GetSpriteRow()
+    {
+        // Formula magică: Hearts(0)->3, Diamonds(1)->2, Clubs(2)->1, Spades(3)->0
+        return 3 - (int)Suit;
     }
 }

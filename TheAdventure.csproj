@@ -18,4 +18,9 @@
     <EmbeddedResource Remove="Blackjack.Tests\**" />
     <None Remove="Blackjack.Tests\**" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Assets\cards.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

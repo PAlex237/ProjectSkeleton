@@ -1,7 +1,6 @@
 using System;
 
-namespace TheAdventure.Models;
-
+namespace TheAdventure;
 public class InsufficientFundsException : Exception
 {
     public InsufficientFundsException(string message = "Not enough funds to place this bet.") 

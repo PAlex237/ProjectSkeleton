@@ -1,7 +1,6 @@
 using Xunit;
 using System.Collections.Generic;
-using TheAdventure.Models; 
-
+using TheAdventure;
 namespace Blackjack.Tests;
 
 public class DeckTests
