@@ -278,8 +278,13 @@ public static class Program
                         // --- Dacă suntem la PARIURI ---
                         else if (currentState == GameState.Betting)
                         {
+                            // B = Back to Menu
+                            if (keyCode == KeyCode.B)
+                            {
+                                currentState = GameState.Menu;
+                            }
                             // Sus / Jos ajustează pariul
-                            if (keyCode == KeyCode.Up)
+                            else if (keyCode == KeyCode.Up)
                             {
                                 if (currentBet + 10 <= playerBudget) currentBet += 10;
                             }
@@ -425,7 +430,7 @@ public static class Program
                     string betMsg = $"PARIU: {currentBet}$ - SUS/JOS pentru +/-";
                     DrawText(r, sdl, fontTexture, betMsg, (800 - betMsg.Length * 24) / 2, 300);
                     DrawText(r, sdl, fontTexture, "APASA R PENTRU A INCEPE RUNDA", (800 - "APASA R PENTRU A INCEPE RUNDA".Length * 24) / 2, 340);
-                    DrawText(r, sdl, fontTexture, "E PENTRU IESIRE", (800 - "E PENTRU IESIRE".Length * 24) / 2, 380);
+                    DrawText(r, sdl, fontTexture, "B PENTRU MENIU - E PENTRU IESIRE", (800 - "B PENTRU MENIU - E PENTRU IESIRE".Length * 24) / 2, 380);
                 }
                 // JOCUL ACTIV sau GameOver -> desenăm cărțile și scorul
                 else
@@ -460,6 +465,11 @@ public static class Program
                         else if (dealerTotal > playerTotal) DrawText(r, sdl, fontTexture, "AI PIERDUT!", (800 - "AI PIERDUT!".Length * 24) / 2, 300);
                         else if (dealerTotal < playerTotal) DrawText(r, sdl, fontTexture, "AI CASTIGAT!", (800 - "AI CASTIGAT!".Length * 24) / 2, 300);
                         else DrawText(r, sdl, fontTexture, "EGALITATE!", (800 - "EGALITATE!".Length * 24) / 2, 300);
+                        DrawText(r, sdl, fontTexture, "R PENTRU RUNDA NOUA", (800 - "R PENTRU RUNDA NOUA".Length * 24) / 2, 350);
+                    }
+                    else if (isPlayerTurn && !isGameOver)
+                    {
+                        DrawText(r, sdl, fontTexture, "H = HIT  |  S = STAND", (800 - "H = HIT  |  S = STAND".Length * 24) / 2, 350);
                     }
                 }
 
