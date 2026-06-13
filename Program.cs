@@ -274,6 +274,17 @@ public static class Program
                         if (currentState == GameState.Menu)
                         {
                             if (keyCode == KeyCode.P) currentState = GameState.Betting; // Apasă P să joci
+                            else if (keyCode == KeyCode.Up)
+                            {
+                                playerBudget += 10;
+                            }
+                            else if (keyCode == KeyCode.Down)
+                            {
+                                if (playerBudget >= 10)
+                                {
+                                    playerBudget -= 10;
+                                }
+                            }
                         }
                         // --- Dacă suntem la PARIURI ---
                         else if (currentState == GameState.Betting)
@@ -419,7 +430,9 @@ public static class Program
                     int centerPromptX = (800 - prompt.Length * 24) / 2;
                     DrawText(r, sdl, fontTexture, title, centerTitleX, 200);
                     DrawText(r, sdl, fontTexture, prompt, centerPromptX, 300);
-                    DrawText(r, sdl, fontTexture, "APASA E PENTRU IESIRE", (800 - "APASA E PENTRU IESIRE".Length * 24) / 2, 340);
+                    DrawText(r, sdl, fontTexture, $"BALANTA: {playerBudget}$", (800 - $"BALANTA: {playerBudget}$".Length * 24) / 2, 340);
+                    DrawText(r, sdl, fontTexture, "SUS/JOS PENTRU A SCHIMBA BALANTA", (800 - "SUS/JOS PENTRU A SCHIMBA BALANTA".Length * 24) / 2, 380);
+                    DrawText(r, sdl, fontTexture, "APASA E PENTRU IESIRE", (800 - "APASA E PENTRU IESIRE".Length * 24) / 2, 420);
                 }
                 // Faza de pariere
                 else if (currentState == GameState.Betting)
@@ -430,9 +443,11 @@ public static class Program
                     string betMsg = $"PARIU: {currentBet}$ - SUS/JOS pentru +/-";
                     DrawText(r, sdl, fontTexture, betMsg, (800 - betMsg.Length * 24) / 2, 300);
                     DrawText(r, sdl, fontTexture, "APASA R PENTRU A INCEPE RUNDA", (800 - "APASA R PENTRU A INCEPE RUNDA".Length * 24) / 2, 340);
-                    DrawText(r, sdl, fontTexture, "B PENTRU MENIU - E PENTRU IESIRE", (800 - "B PENTRU MENIU - E PENTRU IESIRE".Length * 24) / 2, 380);
+                    DrawText(r, sdl, fontTexture, "B PENTRU MENIU", (800 - "B PENTRU MENIU".Length * 24) / 2, 380);
+                    DrawText(r, sdl, fontTexture, "E PENTRU IESIRE", (800 - "E PENTRU IESIRE".Length * 24) / 2, 420);
+                    
                 }
-                // JOCUL ACTIV sau GameOver -> desenăm cărțile și scorul
+                // JOCUL ACTIV sau GameOverdesenăm cărțile și scorul
                 else
                 {
                     // Afișăm balanța și pariul
