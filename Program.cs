@@ -178,9 +178,47 @@ public static class Program
 
         dealerHand.Add(deck.Draw());
         dealerHand.Add(deck.Draw());
-        bool isPlayerTurn = true; 
+        int playerBudget = 500;
+        int currentBet = 50;
+        bool isBettingPhase = true;
+        bool isPlayerTurn = true;
+        bool isGameOver = false;
         bool quit = false;
+        playerHand.Clear();
+        dealerHand.Clear();
+        static string GetScoreDisplay(List<Card> hand)
+        {
+            int currentScore = GetTotalValue(hand);
+            
+            // Calculăm varianta în care toate Asurile ar fi 1
+            int hardScore = 0;
+            int acesCount = 0;
+            foreach (var card in hand)
+            {
+                if (card.Value == CardValue.Jack || card.Value == CardValue.Queen || card.Value == CardValue.King)
+                {
+                    hardScore += 10;
+                }
+                else if (card.Value == CardValue.Ace)
+                {
+                    acesCount++;
+                    hardScore += 1;
+                }
+                else
+                {
+                    hardScore += (int)card.Value;
+                }
+            }
 
+            // Dacă avem Asuri și scorul calculat cu As=11 este diferit de cel cu As=1 
+            // și nu am depășit 21, înseamnă că avem o mână flexibilă (soft)
+            if (acesCount > 0 && currentScore != hardScore && currentScore <= 21)
+            {
+                return $"{hardScore}/{currentScore}";
+            }
+
+            return currentScore.ToString();
+        }
         static int GetTotalValue(List<Card> hand)
         {
             int totalValue = 0;
@@ -223,16 +261,55 @@ public static class Program
 
                 switch (ev.Type)
                 {
-                    // Am păstrat doar Windowevent, restul au fost colapsate pentru claritate (poți lăsa gol ce nu folosești)
                     case (uint)EventType.Windowevent:
                         break;
                     case (uint)EventType.Keydown:
                     {
                         var keyCode = (KeyCode)ev.Key.Keysym.Scancode;
 
-                        if (isPlayerTurn)
+                        // FAZA 1: Înainte de a paria (Ecran de bet)
+                        if (isBettingPhase)
                         {
-                            // === LOGICA PENTRU HIT (Trage carte) ===
+                            // Butoanele + și - (Săgeata Sus / Săgeata Jos)
+                            if (keyCode == KeyCode.Up) 
+                            { 
+                                // Nu te lăsa să pariezi mai mult decât ai în balanță
+                                if (currentBet + 10 <= playerBudget) currentBet += 10; 
+                            }
+                            if (keyCode == KeyCode.Down) 
+                            { 
+                                // Pariul minim să fie de cel puțin 10
+                                if (currentBet - 10 >= 10) currentBet -= 10; 
+                            }
+
+                            // Începe runda
+                            if (keyCode == KeyCode.R )
+                            {
+                                if (playerBudget >= currentBet)
+                                {
+                                    playerHand.Clear();
+                                    dealerHand.Clear();
+
+                                    playerHand.Add(deck.Draw());
+                                    playerHand.Add(deck.Draw());
+
+                                    dealerHand.Add(deck.Draw());
+                                    dealerHand.Add(deck.Draw());
+
+                                    isPlayerTurn = true;
+                                    isGameOver = false;
+                                    isBettingPhase = false; // Ascunde + și -, începe tura
+                                    Console.WriteLine($"--- RUNDĂ NOUĂ --- Ai pariat {currentBet}$.");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Fonduri insuficiente!");
+                                }
+                            }
+                        }
+                        // FAZA 2: În timpul jocului (Hit sau Stand)
+                        else if (isPlayerTurn && !isGameOver)
+                        {
                             if (keyCode == KeyCode.H)
                             {
                                 playerHand.Add(deck.Draw());
@@ -240,27 +317,28 @@ public static class Program
                                 
                                 Console.WriteLine($"Ai tras o carte! Scor curent: {currentScore}");
 
-                                // Verificăm dacă jucătorul a pierdut instant (Bust)
                                 if (currentScore > 21)
                                 {
-                                    isPlayerTurn = false; // Se termină rândul, cartea dealerului se întoarce
-                                    Console.WriteLine("BUST! Ai depășit 21. AI PIERDUT!");
+                                    isPlayerTurn = false;
+                                    isGameOver = true;
+                                    
+                                    Console.WriteLine($"BUST! Ai depășit 21. AI PIERDUT {currentBet}$!");
+                                    playerBudget -= currentBet; // Scădem banii direct
+                                    isBettingPhase = true;      // Înapoi la faza de pariere
                                 }
                             }
-                            // === LOGICA PENTRU STAND (Oprește-te) ===
                             else if (keyCode == KeyCode.S)
                             {
-                                isPlayerTurn = false; // Întoarce cartea dealerului pe față
+                                isPlayerTurn = false;
+                                isGameOver = true;
                                 Console.WriteLine("Ai dat Stand! Acum e rândul Dealerului.");
 
-                                // 1. Dealerul trage automat până face minim 17
                                 while (GetTotalValue(dealerHand) < 17)
                                 {
                                     dealerHand.Add(deck.Draw());
                                     Console.WriteLine("Dealerul trage o carte...");
                                 }
 
-                                // 2. Calculăm cine a câștigat
                                 int playerTotal = GetTotalValue(playerHand);
                                 int dealerTotal = GetTotalValue(dealerHand);
 
@@ -268,41 +346,29 @@ public static class Program
 
                                 if (dealerTotal > 21)
                                 {
-                                    Console.WriteLine("Dealerul a depășit 21 (Bust)! AI CÂȘTIGAT!");
+                                    Console.WriteLine($"Dealerul a depășit 21! AI CÂȘTIGAT {currentBet}$!");
+                                    playerBudget += currentBet;
                                 }
                                 else if (dealerTotal > playerTotal)
                                 {
-                                    Console.WriteLine("Dealerul are un scor mai mare. AI PIERDUT!");
+                                    Console.WriteLine($"Dealerul are un scor mai mare. AI PIERDUT {currentBet}$!");
+                                    playerBudget -= currentBet;
                                 }
                                 else if (dealerTotal < playerTotal)
                                 {
-                                    Console.WriteLine("Ai un scor mai mare! AI CÂȘTIGAT!");
+                                    Console.WriteLine($"Ai un scor mai mare! AI CÂȘTIGAT {currentBet}$!");
+                                    playerBudget += currentBet;
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Egalitate (Push)!");
+                                    Console.WriteLine("Egalitate (Push) - Balanța rămâne neschimbată.");
                                 }
-                            }
-                           
-                        }
-                         else
-                            {        
-                                        if(keyCode == KeyCode.R)
-                                        { playerHand.Clear();
-                                          dealerHand.Clear(); 
-                                          deck = new Deck<Card>(initialCards);
-                                          deck.Shuffle();
-                                          
-                                          playerHand.Add(deck.Draw());
-                                          playerHand.Add(deck.Draw());
 
-                                          dealerHand.Add(deck.Draw());
-                                          dealerHand.Add(deck.Draw());}
-                                          
-                                          isPlayerTurn = true;
-                                          Console.WriteLine("RUNDĂ NOUĂ! Ai primit cărțile. Scorul tău este: " + GetTotalValue(playerHand));
-                                    
+                                Console.WriteLine($"Buget total actual: {playerBudget}$");
+                                isBettingPhase = true; // Permite un nou pariu
                             }
+                        }
+                        
                         break;
                     }
                 }
@@ -317,22 +383,30 @@ public static class Program
                 var r = (Renderer*)renderer;
                 sdl.SetRenderDrawColor(r, 0, 100, 0, 255); // Masa de joc (Verde)
                 sdl.RenderClear(r);
-
+                // Afișăm permanent balanța și pariul curent sus
+                DrawText(r, sdl, fontTexture, $"BALANTA: {playerBudget}$", 50, 700);
+                DrawText(r, sdl, fontTexture, $"PARIU: {currentBet}$", 50, 740);
                 // 1. Desenăm mâna Dealerului
+                
                 DrawHand(r, sdl, dealerHand, dealerHandY, cardTexture, backTexture, isDealerHand: isPlayerTurn);
-
+                
                 // 2. Desenăm mâna Jucătorului
                 DrawHand(r, sdl, playerHand, playerHandY, cardTexture, backTexture);
+                
 
+                
                 // === AFIȘARE SCOR JUCĂTOR ===
                 int playerTotal = GetTotalValue(playerHand);
-                DrawText(r, sdl, fontTexture, $"SCORUL TAU: {playerTotal}", 50, playerHandY - 40);
-
+                if(playerTotal !=0)
+                {
+                    DrawText(r, sdl, fontTexture, $"SCORUL TAU: {GetScoreDisplay(playerHand)}", 50, playerHandY - 40);
+                }
                 // === AFIȘARE SCOR DEALER (Doar când nu mai e rândul tău) ===
                 if (!isPlayerTurn)
                 {
                     int dealerTotal = GetTotalValue(dealerHand);
-                    DrawText(r, sdl, fontTexture, $"SCOR DEALER: {dealerTotal}", 50, dealerHandY - 40);
+                    if(dealerTotal !=0)
+                    DrawText(r, sdl, fontTexture, $"SCOR DEALER: {GetScoreDisplay(dealerHand)}", 50, dealerHandY - 40);
 
                     // Putem afișa un mesaj de status în centrul ecranului
                     if (playerTotal > 21) DrawText(r, sdl, fontTexture, "BUST!", 350, 300);
