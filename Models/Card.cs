@@ -35,7 +35,7 @@ public class Card
         Suit = suit;
         Value = value;
     }
-
+// AI-generated
     // Aflăm pe ce coloană se află cartea (Axa X)
     public int GetSpriteColumn()
     {
@@ -55,4 +55,5 @@ public class Card
         // Formula magică: Hearts(0)->3, Diamonds(1)->2, Clubs(2)->1, Spades(3)->0
         return 3 - (int)Suit;
     }
+    // end AI-generated
 }

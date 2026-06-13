@@ -71,11 +71,9 @@ public static class Program
             throw new Exception("Failed to create renderer.");
         }
 
-        // === COORDONATELE MESEI DE JOC ===
         int dealerHandY = 100;    // Poziția Dealerului (Sus)
         int playerHandY = 550;    // Poziția Jucătorului (Jos)
 
-    // === ÎNCĂRCAREA IMAGINILOR (CARDS.BMP ȘI BACK.BMP) ===
     IntPtr cardTexture = IntPtr.Zero;
     IntPtr backTexture = IntPtr.Zero;
     IntPtr fontTexture = IntPtr.Zero;
@@ -84,7 +82,7 @@ public static class Program
         var context = new SdlContext();
         IntPtr rwFromFilePtr = context.GetProcAddress("SDL_RWFromFile");
         IntPtr loadBmpRwPtr = context.GetProcAddress("SDL_LoadBMP_RW");
-
+// AI-generated
         if (rwFromFilePtr != IntPtr.Zero && loadBmpRwPtr != IntPtr.Zero)
         {
             // 1. Definim funcțiile C o singură dată pentru tot blocul
@@ -156,9 +154,8 @@ public static class Program
             Console.WriteLine("Eroare critică: Nu am putut găsi funcțiile native în SDL2.dll!");
         }
     }
-        // === SETUP PACHET ȘI MÂINI ===
+    //  end AI-generated
 
-        // 1. Generăm cele 52 de cărți standard
         var initialCards = new List<Card>();
         foreach (Suit suit in Enum.GetValues(typeof(Suit)))
         {
@@ -169,7 +166,7 @@ public static class Program
         }
         
         var deck = new Deck<Card>(initialCards);
-        deck.Shuffle(); // Amestecăm pachetul
+        deck.Shuffle();
 
         var playerHand = new List<Card>();
         var dealerHand = new List<Card>();
@@ -192,7 +189,6 @@ public static class Program
         {
             int currentScore = GetTotalValue(hand);
             
-            // Calculăm varianta în care toate Asurile ar fi 1
             int hardScore = 0;
             int acesCount = 0;
             foreach (var card in hand)
@@ -212,8 +208,6 @@ public static class Program
                 }
             }
 
-            // Dacă avem Asuri și scorul calculat cu As=11 este diferit de cel cu As=1 
-            // și nu am depășit 21, înseamnă că avem o mână flexibilă (soft)
             if (acesCount > 0 && currentScore != hardScore && currentScore <= 21)
             {
                 return $"{hardScore}/{currentScore}";
@@ -273,7 +267,7 @@ public static class Program
                         // --- Dacă suntem în MENIU ---
                         if (currentState == GameState.Menu)
                         {
-                            if (keyCode == KeyCode.P) currentState = GameState.Betting; // Apasă P să joci
+                            if (keyCode == KeyCode.P) currentState = GameState.Betting; 
                             else if (keyCode == KeyCode.Up)
                             {
                                 playerBudget += 10;
@@ -493,6 +487,7 @@ public static class Program
 
             ++framesRenderedCounter;
         }
+        // AI-generated
         // === FUNCȚIA DE DESENARE TEXT ===
         unsafe void DrawText(Renderer* r, Sdl sdl, IntPtr fontTex, string text, int startX, int startY)
         {
@@ -511,7 +506,6 @@ public static class Program
 
                 int charIndex = asciiValue - 32;
 
-                // Prevenim afișarea caracterelor inexistente în grilă
                 if (charIndex < 0 || charIndex >= 18 * 7) charIndex = 0; 
 
                 int col = charIndex % 18;
@@ -534,7 +528,7 @@ public static class Program
                 sdl.RenderCopy(r, (Texture*)fontTex, ref srcRect, ref destRect);
             }
         }
-        // === FUNCȚIA DE DESENARE CU A DOUA CARTE ASCUNSĂ LA DEALER ===
+        // end AI-generated
 unsafe void DrawHand(Renderer* r, Sdl sdl, List<Card> hand, int startY, IntPtr cardTex, IntPtr backTex, bool isDealerHand = false)
 {
     if (hand.Count == 0 || cardTex == IntPtr.Zero) return;
@@ -580,7 +574,6 @@ unsafe void DrawHand(Renderer* r, Sdl sdl, List<Card> hand, int startY, IntPtr c
             sdl.RenderCopy(r, (Texture*)cardTex, &srcRect, &destRect);
         }
 
-        // Conturul negru pentru finisaj vizual
         sdl.SetRenderDrawColor(r, 0, 0, 0, 255);
         sdl.RenderDrawRect(r, ref destRect);
     }

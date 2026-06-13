@@ -25,7 +25,7 @@ public class Deck<T>
         _items.RemoveAt(0);
         return item;
     }
-
+// AI-generated
     public void Shuffle()
     {
         int n = _items.Count;
@@ -38,5 +38,5 @@ public class Deck<T>
             _items[k] = _items[n];
             _items[n] = value;
         }
-    }
+    }// end AI-generated
 }
