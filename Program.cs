@@ -69,7 +69,6 @@ public static class Program
         }
 
         // === COORDONATELE MESEI DE JOC ===
-        var startX = 100;         // Marginea din stânga de unde încep cărțile
         int dealerHandY = 100;    // Poziția Dealerului (Sus)
         int playerHandY = 550;    // Poziția Jucătorului (Jos)
         
@@ -106,7 +105,15 @@ public static class Program
                         break;
                     case (uint)EventType.Keydown:
                     {
-                        Console.WriteLine($"Key down: {(KeyCode)ev.Key.Keysym.Scancode}");
+                        // Verificăm ce tastă a fost apăsată
+                        var keyCode = (KeyCode)ev.Key.Keysym.Scancode;
+
+                        if (keyCode == KeyCode.H) // Dacă apasă tasta 'H'
+                        {
+                            playerHand.Add(new Card(Suit.Spades, CardValue.Two)); 
+                            Console.WriteLine("Jucătorul a dat Hit! Carte nouă adăugată.");
+                        }
+                        
                         break;
                     }
                 }
