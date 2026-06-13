@@ -71,49 +71,66 @@ public static class Program
         // === COORDONATELE MESEI DE JOC ===
         int dealerHandY = 100;    // Poziția Dealerului (Sus)
         int playerHandY = 550;    // Poziția Jucătorului (Jos)
-    // === ÎNCĂRCAREA IMAGINII CARDS.BMP ===
+
+    // === ÎNCĂRCAREA IMAGINILOR (CARDS.BMP ȘI BACK.BMP) ===
     IntPtr cardTexture = IntPtr.Zero;
+    IntPtr backTexture = IntPtr.Zero;
+
     unsafe
     {
-        // 1. Ocolim Silk.NET și cerem funcțiile direct din fișierul nativ SDL2.dll
         var context = new SdlContext();
         IntPtr rwFromFilePtr = context.GetProcAddress("SDL_RWFromFile");
         IntPtr loadBmpRwPtr = context.GetProcAddress("SDL_LoadBMP_RW");
 
         if (rwFromFilePtr != IntPtr.Zero && loadBmpRwPtr != IntPtr.Zero)
         {
-            // 2. Definim semnăturile funcțiilor C folosind pointeri (delegate* unmanaged)
+            // 1. Definim funcțiile C o singură dată pentru tot blocul
             var RWFromFile = (delegate* unmanaged[Cdecl]<byte*, byte*, IntPtr>)rwFromFilePtr;
             var LoadBMP_RW = (delegate* unmanaged[Cdecl]<IntPtr, int, Surface*>)loadBmpRwPtr;
 
-            // 3. Pregătim textele în format C (ASCII + un caracter Null '\0' la final)
-            byte[] fileBytes = System.Text.Encoding.ASCII.GetBytes("Assets/cards.bmp\0");
+            // 2. Modul de citire ("rb") e la fel pentru ambele
             byte[] modeBytes = System.Text.Encoding.ASCII.GetBytes("rb\0");
-
-            fixed (byte* pFile = fileBytes)
+            
             fixed (byte* pMode = modeBytes)
             {
-                // 4. Apelăm funcțiile C originale!
-                IntPtr rwOps = RWFromFile(pFile, pMode);
-                if (rwOps != IntPtr.Zero)
+                // --- ÎNCĂRCARE CARDS.BMP ---
+                byte[] cardsFileBytes = System.Text.Encoding.ASCII.GetBytes("Assets//cards.bmp\0");
+                fixed (byte* pCardsFile = cardsFileBytes)
                 {
-                    Surface* surface = LoadBMP_RW(rwOps, 1); // 1 = închide fișierul după citire
-                    if (surface != null)
+                    IntPtr rwOpsCards = RWFromFile(pCardsFile, pMode);
+                    if (rwOpsCards != IntPtr.Zero)
                     {
-                        cardTexture = (IntPtr)sdl.CreateTextureFromSurface((Renderer*)renderer, surface);
-                        sdl.FreeSurface(surface);
-                        Console.WriteLine("Imaginea a fost încărcată cu succes prin metoda directă!");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Eroare la decodarea imaginii BMP din memorie.");
+                        Surface* surfaceCards = LoadBMP_RW(rwOpsCards, 1);
+                        if (surfaceCards != null)
+                        {
+                            cardTexture = (IntPtr)sdl.CreateTextureFromSurface((Renderer*)renderer, surfaceCards);
+                            sdl.FreeSurface(surfaceCards);
+                            Console.WriteLine("cards.bmp încărcat cu succes!");
+                        }
                     }
                 }
-                else
+
+                // --- ÎNCĂRCARE BACK.BMP ---
+                byte[] backFileBytes = System.Text.Encoding.ASCII.GetBytes("Assets//back.bmp\0");
+                fixed (byte* pBackFile = backFileBytes)
                 {
-                    Console.WriteLine("Eroare la citirea fișierului cards.bmp de pe disc.");
+                    IntPtr rwOpsBack = RWFromFile(pBackFile, pMode);
+                    if (rwOpsBack != IntPtr.Zero)
+                    {
+                        Surface* surfaceBack = LoadBMP_RW(rwOpsBack, 1);
+                        if (surfaceBack != null)
+                        {
+                            backTexture = (IntPtr)sdl.CreateTextureFromSurface((Renderer*)renderer, surfaceBack);
+                            sdl.FreeSurface(surfaceBack);
+                            Console.WriteLine("back.bmp încărcat cu succes!");
+                        }
+                    }
                 }
             }
+        }
+        else
+        {
+            Console.WriteLine("Eroare critică: Nu am putut găsi funcțiile native în SDL2.dll!");
         }
     }
         // === SETUP PACHET ȘI MÂINI ===
@@ -190,10 +207,10 @@ public static class Program
                 sdl.RenderClear(r);
 
                 // 1. Desenăm mâna Dealerului
-                DrawHand(r, sdl, dealerHand, dealerHandY, cardTexture);
+                DrawHand(r, sdl, dealerHand, dealerHandY, cardTexture, backTexture, isDealerHand: true);
 
                 // 2. Desenăm mâna Jucătorului
-                DrawHand(r, sdl, playerHand, playerHandY, cardTexture);
+                DrawHand(r, sdl, playerHand, playerHandY, cardTexture, backTexture);
 
                 sdl.RenderPresent(r);
             }
@@ -201,49 +218,62 @@ public static class Program
             ++framesRenderedCounter;
         }
 
-        // === FUNCȚIA DE DESENARE CU IMAGINI ===
-        unsafe void DrawHand(Renderer* r, Sdl sdl, List<Card> hand, int startY, IntPtr texture)
+        // === FUNCȚIA DE DESENARE CU A DOUA CARTE ASCUNSĂ LA DEALER ===
+unsafe void DrawHand(Renderer* r, Sdl sdl, List<Card> hand, int startY, IntPtr cardTex, IntPtr backTex, bool isDealerHand = false)
+{
+    if (hand.Count == 0 || cardTex == IntPtr.Zero) return;
+
+    // Dimensiunile de pe IMAGINE (Sursa - cards.bmp)
+    int spriteCardWidth = 167; 
+    int spriteCardHeight = 220; // Pune 176 dacă imaginile par ușor tăiate
+
+    // Dimensiunile pe ECRAN (Destinația)
+    int destWidth = 80;
+    int destHeight = 120;
+    int spacing = 15;
+    int windowWidth = 800;
+
+    int totalWidth = (hand.Count * destWidth) + ((hand.Count - 1) * spacing);
+    int startX = (windowWidth - totalWidth) / 2;
+
+    for (int i = 0; i < hand.Count; i++)
+    {
+        Card card = hand[i];
+        
+        var destRect = new Silk.NET.Maths.Rectangle<int>(
+            startX + i * (destWidth + spacing),
+            startY,
+            destWidth,
+            destHeight
+        );
+
+        // === MODIFICAREA ESTE AICI ===
+        // Schimbăm 'i == 0' cu 'i == 1' pentru ca a DOUA carte să fie desenată cu spatele
+        if (isDealerHand && i == 1)
         {
-            if (hand.Count == 0 || texture == IntPtr.Zero) return;
-
-            // Dimensiunile de pe IMAGINE (Sursa)
-            int spriteCardWidth = 167; // 2171 / 13
-            int spriteCardHeight = 220; // 880 / 4 (Schimbă în 176 dacă ai 5 rânduri pe imagine)
-
-            // Dimensiunile pe ECRAN (Destinația - cât de mari vrei să apară în joc)
-            int destWidth = 80;
-            int destHeight = 120;
-            int spacing = 15;
-            int windowWidth = 800;
-
-            // Centrarea pe ecran
-            int totalWidth = (hand.Count * destWidth) + ((hand.Count - 1) * spacing);
-            int startX = (windowWidth - totalWidth) / 2;
-
-            for (int i = 0; i < hand.Count; i++)
+            if (backTex != IntPtr.Zero)
             {
-                Card card = hand[i];
-
-                // 1. Dreptunghiul SURSĂ (Decupăm cartea corectă din cards.bmp)
-                var srcRect = new Silk.NET.Maths.Rectangle<int>(
-                    card.GetSpriteColumn() * spriteCardWidth, // Axa X (Coloana)
-                    card.GetSpriteRow() * spriteCardHeight,   // Axa Y (Rândul)
-                    spriteCardWidth,
-                    spriteCardHeight
-                );
-
-                // 2. Dreptunghiul DESTINAȚIE (Unde și cât de mare o punem pe ecran)
-                var destRect = new Silk.NET.Maths.Rectangle<int>(
-                    startX + i * (destWidth + spacing), 
-                    startY, 
-                    destWidth, 
-                    destHeight
-                );
-
-                // 3. Copiem bucata de textură pe ecran!
-                sdl.RenderCopy(r, (Texture*)texture, ref srcRect, ref destRect);
+                sdl.RenderCopy(r, (Texture*)backTex, null, &destRect);
             }
         }
+        else
+        {
+            // Restul cărților (inclusiv prima a dealerului) se decupează normal din cards.bmp
+            var srcRect = new Silk.NET.Maths.Rectangle<int>(
+                card.GetSpriteColumn() * spriteCardWidth,
+                card.GetSpriteRow() * spriteCardHeight,
+                spriteCardWidth,
+                spriteCardHeight
+            );
+
+            sdl.RenderCopy(r, (Texture*)cardTex, &srcRect, &destRect);
+        }
+
+        // Conturul negru pentru finisaj vizual
+        sdl.SetRenderDrawColor(r, 0, 0, 0, 255);
+        sdl.RenderDrawRect(r, ref destRect);
+    }
+}
         unsafe
         {
             sdl.DestroyWindow((Window*)window);
