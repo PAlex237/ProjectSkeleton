@@ -172,20 +172,13 @@ public static class Program
         var playerHand = new List<Card>();
         var dealerHand = new List<Card>();
 
-        // Împărțim cărțile de început (2 pentru Jucător, 2 pentru Dealer)
-        playerHand.Add(deck.Draw());
-        playerHand.Add(deck.Draw());
-
-        dealerHand.Add(deck.Draw());
-        dealerHand.Add(deck.Draw());
         int playerBudget = 0;
         int currentBet = 50;
         bool isBettingPhase = true;
         bool isPlayerTurn = true;
         bool isGameOver = false;
         bool quit = false;
-        playerHand.Clear();
-        dealerHand.Clear();
+
         string savePath = "Assets//save.txt";
         if(File.Exists(savePath))
         {
@@ -423,12 +416,17 @@ public static class Program
                     if(dealerTotal !=0)
                     DrawText(r, sdl, fontTexture, $"SCOR DEALER: {GetScoreDisplay(dealerHand)}", 50, dealerHandY - 40);
 
-                    // Putem afișa un mesaj de status în centrul ecranului
-                    if (playerTotal > 21) DrawText(r, sdl, fontTexture, "BUST!", 350, 300);
-                    else if (dealerTotal > 21) DrawText(r, sdl, fontTexture, "DEALER BUST! AI CASTIGAT!", 200, 300);
-                    else if (dealerTotal > playerTotal) DrawText(r, sdl, fontTexture, "AI PIERDUT!", 320, 300);
-                    else if (dealerTotal < playerTotal) DrawText(r, sdl, fontTexture, "AI CASTIGAT!", 320, 300);
-                    else DrawText(r, sdl, fontTexture, "EGALITATE!", 330, 300);
+                    // === AFIȘARE REZULTAT FINAL ===
+                    static int GetCenteredX(string message, int windowWidth, int charWidth)
+                    {
+                        int totalTextWidth = message.Length * charWidth;
+                        return (windowWidth - totalTextWidth) / 2;
+                    }
+                    if (playerTotal > 21) DrawText(r, sdl, fontTexture, "BUST!", GetCenteredX("BUST!", 800, 24), 300);
+                    else if (dealerTotal > 21) DrawText(r, sdl, fontTexture, "DEALER BUST! AI CASTIGAT!", GetCenteredX("DEALER BUST! AI CASTIGAT!", 800, 24), 300);
+                    else if (dealerTotal > playerTotal) DrawText(r, sdl, fontTexture, "AI PIERDUT!", GetCenteredX("AI PIERDUT!", 800, 24), 300);
+                    else if (dealerTotal < playerTotal) DrawText(r, sdl, fontTexture, "AI CASTIGAT!", GetCenteredX("AI CASTIGAT!", 800, 24), 300);
+                    else DrawText(r, sdl, fontTexture, "EGALITATE!", GetCenteredX("EGALITATE!", 800, 24), 300);
                 }
 
                 sdl.RenderPresent(r);
