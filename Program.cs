@@ -178,7 +178,7 @@ public static class Program
 
         dealerHand.Add(deck.Draw());
         dealerHand.Add(deck.Draw());
-        int playerBudget = 500;
+        int playerBudget = 0;
         int currentBet = 50;
         bool isBettingPhase = true;
         bool isPlayerTurn = true;
@@ -186,6 +186,14 @@ public static class Program
         bool quit = false;
         playerHand.Clear();
         dealerHand.Clear();
+        string savePath = "Assets//save.txt";
+        if(File.Exists(savePath))
+        {
+            if(int.TryParse(File.ReadAllText(savePath), out int loadedBudget))
+            {
+                playerBudget = loadedBudget;
+            }
+        }
         static string GetScoreDisplay(List<Card> hand)
         {
             int currentScore = GetTotalValue(hand);
@@ -256,6 +264,7 @@ public static class Program
                 if (ev.Type == (uint)EventType.Quit)
                 {
                     quit = true;
+                    File.WriteAllText(savePath, playerBudget.ToString());
                     break;
                 }
 
