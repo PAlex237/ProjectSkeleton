@@ -75,7 +75,7 @@ public static class Program
     // === ÎNCĂRCAREA IMAGINILOR (CARDS.BMP ȘI BACK.BMP) ===
     IntPtr cardTexture = IntPtr.Zero;
     IntPtr backTexture = IntPtr.Zero;
-
+    IntPtr fontTexture = IntPtr.Zero;
     unsafe
     {
         var context = new SdlContext();
@@ -123,6 +123,26 @@ public static class Program
                             backTexture = (IntPtr)sdl.CreateTextureFromSurface((Renderer*)renderer, surfaceBack);
                             sdl.FreeSurface(surfaceBack);
                             Console.WriteLine("back.bmp încărcat cu succes!");
+                        }
+                    }
+                }
+                // --- ÎNCĂRCARE FONT.BMP ---
+                byte[] fontFileBytes = System.Text.Encoding.ASCII.GetBytes("Assets/font.bmp\0");
+                fixed (byte* pFontFile = fontFileBytes)
+                {
+                    IntPtr rwOpsFont = RWFromFile(pFontFile, pMode);
+                    if (rwOpsFont != IntPtr.Zero)
+                    {
+                        Surface* surfaceFont = LoadBMP_RW(rwOpsFont, 1);
+                        if (surfaceFont != null)
+                        {   // Setăm negrul (0, 0, 0) ca fiind transparent
+                            unsafe 
+                            {
+                                sdl.SetColorKey(surfaceFont, 1, sdl.MapRGB(surfaceFont->Format, 0, 0, 0));
+                            }
+                            fontTexture = (IntPtr)sdl.CreateTextureFromSurface((Renderer*)renderer, surfaceFont);
+                            sdl.FreeSurface(surfaceFont);
+                            Console.WriteLine("font.bmp a fost încărcat cu succes!");
                         }
                     }
                 }
@@ -286,12 +306,73 @@ public static class Program
                 // 2. Desenăm mâna Jucătorului
                 DrawHand(r, sdl, playerHand, playerHandY, cardTexture, backTexture);
 
+                // === AFIȘARE SCOR JUCĂTOR ===
+                int playerTotal = GetTotalValue(playerHand);
+                DrawText(r, sdl, fontTexture, $"SCORUL TAU: {playerTotal}", 50, playerHandY - 40);
+
+                // === AFIȘARE SCOR DEALER (Doar când nu mai e rândul tău) ===
+                if (!isPlayerTurn)
+                {
+                    int dealerTotal = GetTotalValue(dealerHand);
+                    DrawText(r, sdl, fontTexture, $"SCOR DEALER: {dealerTotal}", 50, dealerHandY - 40);
+
+                    // Putem afișa un mesaj de status în centrul ecranului
+                    if (playerTotal > 21) DrawText(r, sdl, fontTexture, "BUST!", 350, 300);
+                    else if (dealerTotal > 21) DrawText(r, sdl, fontTexture, "DEALER BUST! AI CASTIGAT!", 200, 300);
+                    else if (dealerTotal > playerTotal) DrawText(r, sdl, fontTexture, "AI PIERDUT!", 320, 300);
+                    else if (dealerTotal < playerTotal) DrawText(r, sdl, fontTexture, "AI CASTIGAT!", 320, 300);
+                    else DrawText(r, sdl, fontTexture, "EGALITATE!", 330, 300);
+                }
+
                 sdl.RenderPresent(r);
             }
 
             ++framesRenderedCounter;
         }
+// === FUNCȚIA DE DESENARE TEXT ===
+unsafe void DrawText(Renderer* r, Sdl sdl, IntPtr fontTex, string text, int startX, int startY)
+{
+    if (fontTex == IntPtr.Zero || string.IsNullOrEmpty(text)) return;
 
+    // 256 px lățime / 18 coloane ≈ 14.22 (folosim 14)
+    // 128 px înălțime / 7 rânduri ≈ 18.28 (folosim 18)
+    int charSpriteWidth = 14;  
+    int charSpriteHeight = 18; 
+
+    int destCharWidth = 24; 
+    int destCharHeight = 24;
+
+    for (int i = 0; i < text.Length; i++)
+    {
+        char c = text[i];
+        int asciiValue = (int)c;
+
+        // Scădem 32 deoarece primul caracter din imaginea ta ('!') este ASCII 32
+        int charIndex = asciiValue - 32;
+
+        // Prevenim afișarea caracterelor inexistente în grilă
+        if (charIndex < 0 || charIndex >= 18 * 7) charIndex = 0; 
+
+        int col = charIndex % 18;
+        int row = charIndex / 18;
+
+        var srcRect = new Silk.NET.Maths.Rectangle<int>(
+            col * charSpriteWidth,
+            row * charSpriteHeight,
+            charSpriteWidth,
+            charSpriteHeight
+        );
+
+        var destRect = new Silk.NET.Maths.Rectangle<int>(
+            startX + (i * destCharWidth),
+            startY,
+            destCharWidth,
+            destCharHeight
+        );
+
+        sdl.RenderCopy(r, (Texture*)fontTex, ref srcRect, ref destRect);
+    }
+}
         // === FUNCȚIA DE DESENARE CU A DOUA CARTE ASCUNSĂ LA DEALER ===
 unsafe void DrawHand(Renderer* r, Sdl sdl, List<Card> hand, int startY, IntPtr cardTex, IntPtr backTex, bool isDealerHand = false)
 {
