@@ -286,7 +286,13 @@ public static class Program
                             if (keyCode == KeyCode.R )
                             {
                                 if (playerBudget >= currentBet)
-                                {
+                                {   
+                                    if(deck.Count < 10) // Dacă pachetul are mai puțin de 10 cărți, reinițializează-l
+                                    {
+                                        deck = new Deck<Card>(initialCards);
+                                        deck.Shuffle();
+                                        Console.WriteLine("Pachetul a fost reinițializat și amestecat!");
+                                    }
                                     playerHand.Clear();
                                     dealerHand.Clear();
 
