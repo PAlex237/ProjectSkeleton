@@ -72,19 +72,31 @@ public static class Program
         int dealerHandY = 100;    // Poziția Dealerului (Sus)
         int playerHandY = 550;    // Poziția Jucătorului (Jos)
         
-        // === SETUP MÂINI (PENTRU TESTARE VIZUALĂ) ===
-        var playerHand = new List<Card>
-        {
-            new Card(Suit.Hearts, CardValue.Ten),
-            new Card(Suit.Spades, CardValue.Seven),
-            new Card(Suit.Clubs, CardValue.Four)
-        };
+        // === SETUP PACHET ȘI MÂINI ===
 
-        var dealerHand = new List<Card>
+        // 1. Generăm cele 52 de cărți standard
+        var initialCards = new List<Card>();
+        foreach (Suit suit in Enum.GetValues(typeof(Suit)))
         {
-            new Card(Suit.Diamonds, CardValue.Ace),
-            new Card(Suit.Hearts, CardValue.King)
-        };
+            foreach (CardValue value in Enum.GetValues(typeof(CardValue)))
+            {
+                initialCards.Add(new Card(suit, value));
+            }
+        }
+
+        // 2. Inițializăm pachetul dându-i lista de cărți nou creată
+        var deck = new Deck<Card>(initialCards);
+        deck.Shuffle(); // Amestecăm pachetul
+
+        var playerHand = new List<Card>();
+        var dealerHand = new List<Card>();
+
+        // Împărțim cărțile de început (2 pentru Jucător, 2 pentru Dealer)
+        playerHand.Add(deck.Draw());
+        playerHand.Add(deck.Draw());
+
+        dealerHand.Add(deck.Draw());
+        dealerHand.Add(deck.Draw());
         
         bool quit = false;
        
@@ -105,15 +117,19 @@ public static class Program
                         break;
                     case (uint)EventType.Keydown:
                     {
-                        // Verificăm ce tastă a fost apăsată
                         var keyCode = (KeyCode)ev.Key.Keysym.Scancode;
 
-                        if (keyCode == KeyCode.H) // Dacă apasă tasta 'H'
+                        if (keyCode == KeyCode.H) // Dacă jucătorul apasă 'H'
                         {
-                            playerHand.Add(new Card(Suit.Spades, CardValue.Two)); 
-                            Console.WriteLine("Jucătorul a dat Hit! Carte nouă adăugată.");
+                            playerHand.Add(deck.Draw()); // Tragem o carte reală din pachet
+                            Console.WriteLine($"Jucătorul a dat Hit! Ai acum {playerHand.Count} cărți.");
                         }
-                        
+                        else if (keyCode == KeyCode.S) // Dacă jucătorul apasă 'S'
+                        {
+                            Console.WriteLine("Jucătorul a dat Stand! Tura se termină.");
+                            // Aici vom adăuga logica prin care Dealerul trage cărți mai târziu
+                        }
+
                         break;
                     }
                 }
