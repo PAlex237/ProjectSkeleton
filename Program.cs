@@ -176,7 +176,6 @@ public static class Program
 
         int playerBudget = 0;
         int currentBet = 50;
-        bool isBettingPhase = true;
         bool isPlayerTurn = true;
         bool isGameOver = false;
         bool quit = false;
@@ -312,7 +311,7 @@ public static class Program
 
                                     isPlayerTurn = true;
                                     isGameOver = false;
-                                    isBettingPhase = false;
+
                                     currentState = GameState.Playing;
                                     Console.WriteLine($"--- RUNDĂ NOUĂ --- Ai pariat {currentBet}$.");
                                 }
@@ -338,7 +337,6 @@ public static class Program
                                     isGameOver = true;
                                     Console.WriteLine($"BUST! Ai depășit 21. AI PIERDUT {currentBet}$!");
                                     playerBudget -= currentBet;
-                                    isBettingPhase = true;
                                     currentState = GameState.GameOver;
                                 }
                             }
@@ -382,7 +380,6 @@ public static class Program
                                 }
 
                                 Console.WriteLine($"Buget total actual: {playerBudget}$");
-                                isBettingPhase = true;
                                 currentState = GameState.GameOver;
                             }
                         }
@@ -407,9 +404,6 @@ public static class Program
                 var r = (Renderer*)renderer;
                 sdl.SetRenderDrawColor(r, 0, 100, 0, 255); // Masa de joc (Verde)
                 sdl.RenderClear(r);
-                // Afișăm permanent balanța și pariul curent sus
-                DrawText(r, sdl, fontTexture, $"BALANTA: {playerBudget}$", 50, 700);
-                DrawText(r, sdl, fontTexture, $"PARIU: {currentBet}$", 50, 740);
 
                 // Meniu principal
                 if (currentState == GameState.Menu)
@@ -425,6 +419,9 @@ public static class Program
                 // Faza de pariere
                 else if (currentState == GameState.Betting)
                 {
+                    DrawText(r, sdl, fontTexture, $"BALANTA: {playerBudget}$", 50, 700);
+                    DrawText(r, sdl, fontTexture, $"PARIU: {currentBet}$", 50, 740);
+
                     string betMsg = $"PARIU: {currentBet}$ - SUS/JOS pentru +/-";
                     DrawText(r, sdl, fontTexture, betMsg, (800 - betMsg.Length * 24) / 2, 300);
                     DrawText(r, sdl, fontTexture, "APASA R PENTRU A INCEPE RUNDA", (800 - "APASA R PENTRU A INCEPE RUNDA".Length * 24) / 2, 340);
@@ -433,6 +430,10 @@ public static class Program
                 // JOCUL ACTIV sau GameOver -> desenăm cărțile și scorul
                 else
                 {
+                    // Afișăm balanța și pariul
+                    DrawText(r, sdl, fontTexture, $"BALANTA: {playerBudget}$", 50, 700);
+                    DrawText(r, sdl, fontTexture, $"PARIU: {currentBet}$", 50, 740);
+
                     // 1. Desenăm mâna Dealerului
                     DrawHand(r, sdl, dealerHand, dealerHandY, cardTexture, backTexture, isDealerHand: isPlayerTurn);
 
