@@ -283,8 +283,26 @@ public static class Program
                                     Console.WriteLine("Egalitate (Push)!");
                                 }
                             }
+                           
                         }
-                        
+                         else
+                            {        
+                                        if(keyCode == KeyCode.R)
+                                        { playerHand.Clear();
+                                          dealerHand.Clear(); 
+                                          deck = new Deck<Card>(initialCards);
+                                          deck.Shuffle();
+                                          
+                                          playerHand.Add(deck.Draw());
+                                          playerHand.Add(deck.Draw());
+
+                                          dealerHand.Add(deck.Draw());
+                                          dealerHand.Add(deck.Draw());}
+                                          
+                                          isPlayerTurn = true;
+                                          Console.WriteLine("RUNDĂ NOUĂ! Ai primit cărțile. Scorul tău este: " + GetTotalValue(playerHand));
+                                    
+                            }
                         break;
                     }
                 }
@@ -329,60 +347,55 @@ public static class Program
 
             ++framesRenderedCounter;
         }
-// === FUNCȚIA DE DESENARE TEXT ===
-unsafe void DrawText(Renderer* r, Sdl sdl, IntPtr fontTex, string text, int startX, int startY)
-{
-    if (fontTex == IntPtr.Zero || string.IsNullOrEmpty(text)) return;
+        // === FUNCȚIA DE DESENARE TEXT ===
+        unsafe void DrawText(Renderer* r, Sdl sdl, IntPtr fontTex, string text, int startX, int startY)
+        {
+            if (fontTex == IntPtr.Zero || string.IsNullOrEmpty(text)) return;
 
-    // 256 px lățime / 18 coloane ≈ 14.22 (folosim 14)
-    // 128 px înălțime / 7 rânduri ≈ 18.28 (folosim 18)
-    int charSpriteWidth = 14;  
-    int charSpriteHeight = 18; 
+            int charSpriteWidth = 14;  
+            int charSpriteHeight = 18; 
 
-    int destCharWidth = 24; 
-    int destCharHeight = 24;
+            int destCharWidth = 24; 
+            int destCharHeight = 24;
 
-    for (int i = 0; i < text.Length; i++)
-    {
-        char c = text[i];
-        int asciiValue = (int)c;
+            for (int i = 0; i < text.Length; i++)
+            {
+                char c = text[i];
+                int asciiValue = (int)c;
 
-        // Scădem 32 deoarece primul caracter din imaginea ta ('!') este ASCII 32
-        int charIndex = asciiValue - 32;
+                int charIndex = asciiValue - 32;
 
-        // Prevenim afișarea caracterelor inexistente în grilă
-        if (charIndex < 0 || charIndex >= 18 * 7) charIndex = 0; 
+                // Prevenim afișarea caracterelor inexistente în grilă
+                if (charIndex < 0 || charIndex >= 18 * 7) charIndex = 0; 
 
-        int col = charIndex % 18;
-        int row = charIndex / 18;
+                int col = charIndex % 18;
+                int row = charIndex / 18;
 
-        var srcRect = new Silk.NET.Maths.Rectangle<int>(
-            col * charSpriteWidth,
-            row * charSpriteHeight,
-            charSpriteWidth,
-            charSpriteHeight
-        );
+                var srcRect = new Silk.NET.Maths.Rectangle<int>(
+                    col * charSpriteWidth,
+                    row * charSpriteHeight,
+                    charSpriteWidth,
+                    charSpriteHeight
+                );
 
-        var destRect = new Silk.NET.Maths.Rectangle<int>(
-            startX + (i * destCharWidth),
-            startY,
-            destCharWidth,
-            destCharHeight
-        );
+                var destRect = new Silk.NET.Maths.Rectangle<int>(
+                    startX + (i * destCharWidth),
+                    startY,
+                    destCharWidth,
+                    destCharHeight
+                );
 
-        sdl.RenderCopy(r, (Texture*)fontTex, ref srcRect, ref destRect);
-    }
-}
+                sdl.RenderCopy(r, (Texture*)fontTex, ref srcRect, ref destRect);
+            }
+        }
         // === FUNCȚIA DE DESENARE CU A DOUA CARTE ASCUNSĂ LA DEALER ===
 unsafe void DrawHand(Renderer* r, Sdl sdl, List<Card> hand, int startY, IntPtr cardTex, IntPtr backTex, bool isDealerHand = false)
 {
     if (hand.Count == 0 || cardTex == IntPtr.Zero) return;
 
-    // Dimensiunile de pe IMAGINE (Sursa - cards.bmp)
     int spriteCardWidth = 167; 
-    int spriteCardHeight = 220; // Pune 176 dacă imaginile par ușor tăiate
+    int spriteCardHeight = 220;
 
-    // Dimensiunile pe ECRAN (Destinația)
     int destWidth = 80;
     int destHeight = 120;
     int spacing = 15;
@@ -402,8 +415,6 @@ unsafe void DrawHand(Renderer* r, Sdl sdl, List<Card> hand, int startY, IntPtr c
             destHeight
         );
 
-        // === MODIFICAREA ESTE AICI ===
-        // Schimbăm 'i == 0' cu 'i == 1' pentru ca a DOUA carte să fie desenată cu spatele
         if (isDealerHand && i == 1)
         {
             if (backTex != IntPtr.Zero)
@@ -413,7 +424,6 @@ unsafe void DrawHand(Renderer* r, Sdl sdl, List<Card> hand, int startY, IntPtr c
         }
         else
         {
-            // Restul cărților (inclusiv prima a dealerului) se decupează normal din cards.bmp
             var srcRect = new Silk.NET.Maths.Rectangle<int>(
                 card.GetSpriteColumn() * spriteCardWidth,
                 card.GetSpriteRow() * spriteCardHeight,
