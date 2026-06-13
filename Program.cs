@@ -158,9 +158,39 @@ public static class Program
 
         dealerHand.Add(deck.Draw());
         dealerHand.Add(deck.Draw());
-        
+        bool isPlayerTurn = true; 
         bool quit = false;
-       
+
+        static int GetTotalValue(List<Card> hand)
+        {
+            int totalValue = 0;
+            int acesCount = 0;
+
+            foreach (var card in hand)
+            {
+                if (card.Value == CardValue.Jack || card.Value == CardValue.Queen || card.Value == CardValue.King)
+                {
+                    totalValue += 10;
+                }
+                else if (card.Value == CardValue.Ace)
+                {
+                    totalValue += 11;
+                    acesCount++;
+                }
+                else
+                {
+                    totalValue += (int)card.Value;
+                }
+            }
+
+            while (totalValue > 21 && acesCount > 0)
+            {
+                totalValue -= 10;
+                acesCount--;
+            }
+
+            return totalValue;
+        }
         while (!quit)
         {
             while (sdl.PollEvent(ref ev) != 0)
@@ -180,17 +210,61 @@ public static class Program
                     {
                         var keyCode = (KeyCode)ev.Key.Keysym.Scancode;
 
-                        if (keyCode == KeyCode.H) // Dacă jucătorul apasă 'H'
+                        if (isPlayerTurn)
                         {
-                            playerHand.Add(deck.Draw()); // Tragem o carte reală din pachet
-                            Console.WriteLine($"Jucătorul a dat Hit! Ai acum {playerHand.Count} cărți.");
-                        }
-                        else if (keyCode == KeyCode.S) // Dacă jucătorul apasă 'S'
-                        {
-                            Console.WriteLine("Jucătorul a dat Stand! Tura se termină.");
-                            // Aici vom adăuga logica prin care Dealerul trage cărți mai târziu
-                        }
+                            // === LOGICA PENTRU HIT (Trage carte) ===
+                            if (keyCode == KeyCode.H)
+                            {
+                                playerHand.Add(deck.Draw());
+                                int currentScore = GetTotalValue(playerHand);
+                                
+                                Console.WriteLine($"Ai tras o carte! Scor curent: {currentScore}");
 
+                                // Verificăm dacă jucătorul a pierdut instant (Bust)
+                                if (currentScore > 21)
+                                {
+                                    isPlayerTurn = false; // Se termină rândul, cartea dealerului se întoarce
+                                    Console.WriteLine("BUST! Ai depășit 21. AI PIERDUT!");
+                                }
+                            }
+                            // === LOGICA PENTRU STAND (Oprește-te) ===
+                            else if (keyCode == KeyCode.S)
+                            {
+                                isPlayerTurn = false; // Întoarce cartea dealerului pe față
+                                Console.WriteLine("Ai dat Stand! Acum e rândul Dealerului.");
+
+                                // 1. Dealerul trage automat până face minim 17
+                                while (GetTotalValue(dealerHand) < 17)
+                                {
+                                    dealerHand.Add(deck.Draw());
+                                    Console.WriteLine("Dealerul trage o carte...");
+                                }
+
+                                // 2. Calculăm cine a câștigat
+                                int playerTotal = GetTotalValue(playerHand);
+                                int dealerTotal = GetTotalValue(dealerHand);
+
+                                Console.WriteLine($"--- SCOR FINAL --- Tu: {playerTotal} | Dealer: {dealerTotal}");
+
+                                if (dealerTotal > 21)
+                                {
+                                    Console.WriteLine("Dealerul a depășit 21 (Bust)! AI CÂȘTIGAT!");
+                                }
+                                else if (dealerTotal > playerTotal)
+                                {
+                                    Console.WriteLine("Dealerul are un scor mai mare. AI PIERDUT!");
+                                }
+                                else if (dealerTotal < playerTotal)
+                                {
+                                    Console.WriteLine("Ai un scor mai mare! AI CÂȘTIGAT!");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Egalitate (Push)!");
+                                }
+                            }
+                        }
+                        
                         break;
                     }
                 }
@@ -207,7 +281,7 @@ public static class Program
                 sdl.RenderClear(r);
 
                 // 1. Desenăm mâna Dealerului
-                DrawHand(r, sdl, dealerHand, dealerHandY, cardTexture, backTexture, isDealerHand: true);
+                DrawHand(r, sdl, dealerHand, dealerHandY, cardTexture, backTexture, isDealerHand: isPlayerTurn);
 
                 // 2. Desenăm mâna Jucătorului
                 DrawHand(r, sdl, playerHand, playerHandY, cardTexture, backTexture);
