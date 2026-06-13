@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using Silk.NET.SDL;
+
 namespace TheAdventure;
 
 public static class Program
@@ -33,7 +34,7 @@ public static class Program
         unsafe
         {
             window = (IntPtr)sdl.CreateWindow(
-                "The Adventure", Sdl.WindowposUndefined, Sdl.WindowposUndefined, 800, 800,
+                "The Adventure - Blackjack", Sdl.WindowposUndefined, Sdl.WindowposUndefined, 800, 800,
                 (uint)WindowFlags.Resizable | (uint)WindowFlags.AllowHighdpi
             );
 
@@ -67,24 +68,29 @@ public static class Program
             throw new Exception("Failed to create renderer.");
         }
 
-        var startX = 100;
-        var startY = 100;
-        var endX = 200;
-        var endY = 200;
-        int playerHandX = 100;
-        int playerHandY = 500; 
+        // === COORDONATELE MESEI DE JOC ===
+        var startX = 100;         // Marginea din stânga de unde încep cărțile
+        int dealerHandY = 100;    // Poziția Dealerului (Sus)
+        int playerHandY = 550;    // Poziția Jucătorului (Jos)
+        
+        // === SETUP MÂINI (PENTRU TESTARE VIZUALĂ) ===
         var playerHand = new List<Card>
         {
             new Card(Suit.Hearts, CardValue.Ten),
             new Card(Suit.Spades, CardValue.Seven),
             new Card(Suit.Clubs, CardValue.Four)
         };
+
+        var dealerHand = new List<Card>
+        {
+            new Card(Suit.Diamonds, CardValue.Ace),
+            new Card(Suit.Hearts, CardValue.King)
+        };
         
         bool quit = false;
        
         while (!quit)
         {
-            
             while (sdl.PollEvent(ref ev) != 0)
             {
                 if (ev.Type == (uint)EventType.Quit)
@@ -95,119 +101,9 @@ public static class Program
 
                 switch (ev.Type)
                 {
+                    // Am păstrat doar Windowevent, restul au fost colapsate pentru claritate (poți lăsa gol ce nu folosești)
                     case (uint)EventType.Windowevent:
-                    {
-                        switch (ev.Window.Event)
-                        {
-                            case (byte)WindowEventID.Shown:
-                            case (byte)WindowEventID.Exposed:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.Hidden:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.Moved:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.SizeChanged:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.Minimized:
-                            case (byte)WindowEventID.Maximized:
-                            case (byte)WindowEventID.Restored:
-                                break;
-                            case (byte)WindowEventID.Enter:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.Leave:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.FocusGained:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.FocusLost:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.Close:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.TakeFocus:
-                            {
-                                unsafe
-                                {
-                                    sdl.SetWindowInputFocus(sdl.GetWindowFromID(ev.Window.WindowID));
-                                }
-
-                                break;
-                            }
-                        }
-
                         break;
-                    }
-
-                    case (uint)EventType.Fingermotion:
-                    {
-                        break;
-                    }
-
-                    case (uint)EventType.Mousemotion:
-                    {
-                        if (keyboardState[(byte)KeyCode.LShift] > 0)
-                        {
-                            endX = ev.Motion.X;
-                            endY = ev.Motion.Y;
-                        }
-                        else
-                        {
-                           // startX = ev.Motion.X;
-                          //  startY = ev.Motion.Y;
-                        }
-
-                        break;
-                    }
-
-                    case (uint)EventType.Fingerdown:
-                    {
-                        mouseButtonStates[(byte)MouseButton.Primary] = 1;
-                        break;
-                    }
-                    case (uint)EventType.Mousebuttondown:
-                    {
-                        mouseButtonStates[ev.Button.Button] = 1;
-                        break;
-                    }
-
-                    case (uint)EventType.Fingerup:
-                    {
-                        mouseButtonStates[(byte)MouseButton.Primary] = 0;
-                        break;
-                    }
-
-                    case (uint)EventType.Mousebuttonup:
-                    {
-                        mouseButtonStates[ev.Button.Button] = 0;
-                        break;
-                    }
-
-                    case (uint)EventType.Mousewheel:
-                    {
-                        break;
-                    }
-
-                    case (uint)EventType.Keyup:
-                    {
-                        break;
-                    }
-
                     case (uint)EventType.Keydown:
                     {
                         Console.WriteLine($"Key down: {(KeyCode)ev.Key.Keysym.Scancode}");
@@ -219,51 +115,56 @@ public static class Program
             var elapsed = timer.Elapsed;
             timer.Restart();
 
-            // game.render(renderer, RenderEvent{ elapsed, framesRenderedCounter++ });
+            // === BLOCUL DE DESENARE ===
             unsafe
             {
                 var r = (Renderer*)renderer;
-                sdl.SetRenderDrawColor(r, 0, 100, 0, 255); // Masa de joc
+                sdl.SetRenderDrawColor(r, 0, 100, 0, 255); // Masa de joc (Verde)
                 sdl.RenderClear(r);
 
-                
-                for (int i = 0; i < playerHand.Count; i++)
-                {
-                    // 1. Desenăm dreptunghiul alb (fața cărții)
-                    var cardRect = new Silk.NET.Maths.Rectangle<int>(startX + (i * 110), 500, 100, 150);
-                    sdl.SetRenderDrawColor(r, 255, 255, 255, 255);
-                    sdl.RenderFillRect(r, ref cardRect);
+                // 1. Desenăm mâna Dealerului
+                DrawHand(r, sdl, dealerHand, dealerHandY);
 
-                    // 2. Desenăm conturul negru
-                    sdl.SetRenderDrawColor(r, 0, 0, 0, 255);
-                    sdl.RenderDrawRect(r, ref cardRect);
-                }
-                DrawHand(r, sdl, playerHand, playerHandX, playerHandY);
+                // 2. Desenăm mâna Jucătorului
+                DrawHand(r, sdl, playerHand, playerHandY);
+
                 sdl.RenderPresent(r);
             }
 
             ++framesRenderedCounter;
         }
-        unsafe void DrawHand(Renderer* r, Sdl sdl, List<Card> hand, int startX, int startY)
-{
-int cardWidth = 70;
-int cardHeight = 100;
-    int spacing = 10;
 
-    for (int i = 0; i < hand.Count; i++)
+        // === FUNCȚIA DE DESENARE A CĂRȚILOR (ACUM CENTRATĂ DINAMIC) ===
+    unsafe void DrawHand(Renderer* r, Sdl sdl, List<Card> hand, int startY)
     {
-        // Calculăm poziția pentru fiecare carte
-        var cardRect = new Silk.NET.Maths.Rectangle<int>(startX + i * (cardWidth + spacing), startY, cardWidth, cardHeight);
-        
-        // Desenăm spatele/fața cărții
-        sdl.SetRenderDrawColor(r, 255, 255, 255, 255); // Alb
-        sdl.RenderFillRect(r, ref cardRect);
-        
-        // Desenăm conturul
-        sdl.SetRenderDrawColor(r, 0, 0, 0, 255); // Negru
-        sdl.RenderDrawRect(r, ref cardRect);
+        if (hand.Count == 0) return; // Dacă nu sunt cărți, nu desenăm nimic
+
+        int cardWidth = 80;
+        int cardHeight = 120;
+        int spacing = 15;
+        int windowWidth = 800; // Lățimea ferestrei tale setată la sdl.CreateWindow
+
+        // 1. Calculăm cât spațiu ocupă toată mâna pe orizontală
+        // (Numărul de cărți * Lățimea) + (Numărul de spații libere * Dimensiunea spațiului)
+        int totalWidth = (hand.Count * cardWidth) + ((hand.Count - 1) * spacing);
+
+        // 2. Calculăm de unde trebuie să înceapă prima carte pentru a centra întregul grup
+        int startX = (windowWidth - totalWidth) / 2;
+
+        for (int i = 0; i < hand.Count; i++)
+        {
+            var cardRect = new Silk.NET.Maths.Rectangle<int>(startX + i * (cardWidth + spacing), startY, cardWidth, cardHeight);
+            
+            // Desenăm fața cărții (Alb)
+            sdl.SetRenderDrawColor(r, 255, 255, 255, 255);
+            sdl.RenderFillRect(r, ref cardRect);
+            
+            // Desenăm conturul (Negru)
+            sdl.SetRenderDrawColor(r, 0, 0, 0, 255);
+            sdl.RenderDrawRect(r, ref cardRect);
+        }
     }
-}
+
         unsafe
         {
             sdl.DestroyWindow((Window*)window);
